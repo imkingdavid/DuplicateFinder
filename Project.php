@@ -71,33 +71,37 @@ class Project
 			$contents = file_get_contents($file);
 			if (!empty($contents))
 			{
-				$cmatches = $fmatches = array();
-				// Functions
-				if ($classes = preg_match_all("/class ([a-zA-Z_]+([a-zA-Z0-9_]*)?)\s*{/", $contents, $cmatches))
+				$cmatches = $fmatches = $imatches = array();
+				// We don't do interfaces yet, but we need to get them out of the way
+				// so that functions aren't loaded from them
+				if ($interfaces = preg_match_all("/interface ([a-zA-Z_]+([a-zA-Z0-9_]*)?)\s*{/", $contents, $imatches))
 				{
-					foreach($cmatches[1] as $match)
+					//continue;
+				}
+				// Classes
+				if ($classes = preg_match_all("/(abstract )?class ([a-zA-Z_]+([a-zA-Z0-9_]*)?)( (extends|implements) ([a-zA-Z_]+([a-zA-Z0-9_]*)?(, ?([a-zA-Z_]+([a-zA-Z0-9_]*)?)*)?)*?)*?\s*{/", $contents, $cmatches))
+				{
+					// we use index 2 because index one matches whether or not there is an abstract keyword
+					// index 2 isolates the class name
+					foreach($cmatches[2] as $match)
 					{
 						$this->classes[] = $match;
 					}
 					// we don't want to get all the class methods
 					// the only functions we care about are the ones in global scope
-					continue;
+					// continue;
 				}
-
+				// Functions
 				if ($functions = preg_match_all("/function ([a-zA-Z_]+([a-zA-Z0-9_]*)?)\s*\(/", $contents, $fmatches))
 				{
+					// index one isolates the function name
 					foreach($fmatches[1] as $match)
 					{
-						$this->functions[] = $match;
+						$this->functions[$match][] = $file;
 					}
 				}
 			}
 		}
 		return $this;
 	}
-
-	/**
-	 * Get all class names
-	 *
-	 */
 }
